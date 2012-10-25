@@ -1,0 +1,5 @@
+Take a file containing a SQL query and turn it into a \copy statement for use with psql.
+
+Call query2copy with no arguments for help.
+
+Requires perl.

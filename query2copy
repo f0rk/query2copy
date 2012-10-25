@@ -1,0 +1,43 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+use autodie;
+use IO::Handle;
+
+my $query_path = $ARGV[0];
+my $output_path = $ARGV[1];
+
+if (!defined($query_path)) {
+    STDERR->print("usage: query2copy query.sql target.csv\n");
+    exit(1);
+}
+
+if (!defined($output_path)) {
+    STDERR->print("usage: query2copy query.sql target.csv\n");
+    exit(1);
+}
+
+if (! -f $query_path) {
+    STDERR->print("file '$query_path' does not exist.\n");
+    STDERR->print("usage: query2copy query.sql target.csv\n");
+    exit(1);
+}
+
+open(my $query, "<", $query_path);
+
+print("\\copy (");
+my $text = "";
+while (my $line = <$query>) {
+    $line =~ s/--.*$//;
+    $line =~ s/^\s+//;
+    $line =~ s/\s+$//;
+    if (length($line) > 0) {
+        $text .= "$line ";
+    }
+}
+$text =~ s/\s+$//;
+$text =~ s/;+//;
+$text =~ s/\s+$//;
+print($text);
+print(") to '$output_path' with csv header\n");
