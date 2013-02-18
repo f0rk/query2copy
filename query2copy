@@ -29,6 +29,7 @@ open(my $query, "<", $query_path);
 print("\\copy (");
 my $text = "";
 while (my $line = <$query>) {
+    $line =~ tr/\x{feff}//d;
     $line =~ s/--.*$//;
     $line =~ s/^\s+//;
     $line =~ s/\s+$//;
