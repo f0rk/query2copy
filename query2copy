@@ -24,6 +24,12 @@ if (! -f $query_path) {
     exit(1);
 }
 
+if ($output_path eq "-") {
+    $output_path = "stdout";
+} else {
+    $output_path = "'$output_path'";
+}
+
 open(my $query, "<", $query_path);
 
 print("\\copy (");
@@ -41,4 +47,4 @@ $text =~ s/\s+$//;
 $text =~ s/;+//;
 $text =~ s/\s+$//;
 print($text);
-print(") to '$output_path' with csv header\n");
+print(") to $output_path with csv header\n");
