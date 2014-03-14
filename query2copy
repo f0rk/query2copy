@@ -5,8 +5,16 @@ use warnings;
 use autodie;
 use IO::Handle;
 
-my $query_path = $ARGV[0];
-my $output_path = $ARGV[1];
+my $use_backslash = 1;
+my @args = @ARGV;
+if (grep { /^--no-backslash$/ } @args) {
+    $use_backslash = 0;
+}
+
+@args = grep { !/^--no-backslash$/ } @args;
+
+my $query_path = $args[0];
+my $output_path = $args[1];
 
 if (!defined($query_path)) {
     STDERR->print("usage: query2copy query.sql target.csv\n");
@@ -32,19 +40,46 @@ if ($output_path eq "-") {
 
 open(my $query, "<", $query_path);
 
-print("\\copy (");
+my @sets = ();
 my $text = "";
+
 while (my $line = <$query>) {
     $line =~ tr/\x{feff}//d;
     $line =~ s/--.*$//;
     $line =~ s/^\s+//;
     $line =~ s/\s+$//;
+
+    # if this line starts with \set or set, put it aside. we'll append them to
+    # the top of the buffer we generate later.
+    if ($line =~ /^[\\]?set/) {
+        push(@sets, $line);
+        next;
+    }
+
     if (length($line) > 0) {
         $text .= "$line ";
     }
 }
+
 $text =~ s/\s+$//;
 $text =~ s/;+//;
 $text =~ s/\s+$//;
+
+my $set_text = "";
+for my $set (@sets) {
+    $set_text .= $set . "\n";
+}
+
+if ($set_text) {
+    $set_text .= "\n";
+}
+
+my $copy = "\\copy";
+if (!$use_backslash) {
+    $copy = "copy";
+}
+
+$text = $set_text . "$copy (" . $text . ") to $output_path with csv header\n";
+
 print($text);
-print(") to $output_path with csv header\n");
+
