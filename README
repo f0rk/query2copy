@@ -3,3 +3,29 @@ Take a file containing a SQL query and turn it into a \copy statement for use wi
 Call query2copy with no arguments for help.
 
 Requires perl.
+
+Examples:
+
+Say you have the following query saved to /tmp/query.sql and want to save the
+output to /tmp/contracts.csv:
+
+set work_mem = '16MB';
+
+select
+    *
+from
+    contracts
+;
+
+query2copy will convert it to this:
+
+set work_mem = '16MB';
+
+\copy (select * from contracts) to '/tmp/contracts.csv' with csv header
+
+You can also use '-' as the file to write to stdout, but be aware other output
+from psql will be present in the resulting file.
+
+You can also call query2copy with --no-backslash to generate a copy statement
+without a backslash.
+
