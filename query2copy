@@ -5,6 +5,11 @@ use warnings;
 use autodie;
 use IO::Handle;
 
+
+my $stdin = IO::Handle->new()->fdopen(fileno(STDIN), "r");
+my $stdout = IO::Handle->new()->fdopen(fileno(STDOUT), "w");
+my $stderr = IO::Handle->new()->fdopen(fileno(STDERR), "w");
+
 my $use_backslash = 1;
 my @args = @ARGV;
 if (grep { /^--no-backslash$/ } @args) {
@@ -17,18 +22,18 @@ my $query_path = $args[0];
 my $output_path = $args[1];
 
 if (!defined($query_path)) {
-    STDERR->print("usage: query2copy query.sql target.csv\n");
+    $stderr->print("usage: query2copy query.sql target.csv\n");
     exit(1);
 }
 
 if (!defined($output_path)) {
-    STDERR->print("usage: query2copy query.sql target.csv\n");
+    $stderr->print("usage: query2copy query.sql target.csv\n");
     exit(1);
 }
 
-if (! -f $query_path) {
-    STDERR->print("file '$query_path' does not exist.\n");
-    STDERR->print("usage: query2copy query.sql target.csv\n");
+if (! -f $query_path && $query_path ne "-") {
+    $stderr->print("file '$query_path' does not exist.\n");
+    $stderr->print("usage: query2copy query.sql target.csv\n");
     exit(1);
 }
 
@@ -38,7 +43,12 @@ if ($output_path eq "-") {
     $output_path = "'$output_path'";
 }
 
-open(my $query, "<", $query_path);
+my $query = undef;
+if ($query_path eq "-") {
+    $query = $stdin;
+} else {
+    open($query, "<", $query_path);
+}
 
 my @sets = ();
 my $text = "";
@@ -81,5 +91,5 @@ if (!$use_backslash) {
 
 $text = $set_text . "$copy (" . $text . ") to $output_path with csv header\n";
 
-print($text);
+$stdout->print($text);
 
