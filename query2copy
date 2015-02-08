@@ -37,10 +37,16 @@ if (! -f $query_path && $query_path ne "-") {
     exit(1);
 }
 
+sub escape {
+    my $val = shift;
+
+    return $val =~ s/'/''/gr;
+}
+
 if ($output_path eq "-") {
     $output_path = "stdout";
 } else {
-    $output_path = "'$output_path'";
+    $output_path = "'" . escape($output_path) ."'";
 }
 
 my $query = undef;
