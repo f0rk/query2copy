@@ -77,6 +77,7 @@ while (my $line = <$query>) {
     }
 }
 
+$text =~ s!/\*.*?\*/!!g;
 $text =~ s/\s+$//;
 $text =~ s/;+//;
 $text =~ s/\s+$//;
