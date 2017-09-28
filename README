@@ -11,8 +11,21 @@ output to /tmp/contracts.csv:
 
 set work_mem = '16MB';
 
+create or replace function pg_temp.helper(val text)
+returns integer
+as $$
+begin
+    if val = 'foo' then
+        return 1;
+    else
+        return 0;
+    endif;
+end;
+$$ language plpgsql immutable;
+
 select
-    *
+    *,
+    pg_temp.helper(contract_key)
 from
     contracts
 ;
@@ -20,8 +33,27 @@ from
 query2copy will convert it to this:
 
 set work_mem = '16MB';
+create or replace function pg_temp.helper(val text)
+returns integer
+as $$
+begin
+    if val = 'foo' then
+        return 1;
+    else
+        return 0;
+    endif;
+end;
+$$ language plpgsql immutable;
 
-\copy (select * from contracts) to '/tmp/contracts.csv' with csv header
+\copy (select *, pg_temp.helper(contract_key) from contracts) to '/tmp/contracts.csv' with csv header
+
+This allows you to use query2copy to convert a query (with sets and helper
+functions) into a copy-able statement suitable for use in a pipe. For example:
+
+query2copy /tmp/query.sql /tmp/output.csv | psql 'postgresql:///test'
+
+Will execute the sets, create the functions, run the query, and cause the
+output to be saved as a csv.
 
 You can also use '-' as the file to write to stdout, but be aware other output
 from psql will be present in the resulting file.
