@@ -16,7 +16,13 @@ if (grep { /^--no-backslash$/ } @args) {
     $use_backslash = 0;
 }
 
+my $use_gzip = 0;
+if (grep { /^--gzip$/ } @args) {
+    $use_gzip = 1;
+}
+
 @args = grep { !/^--no-backslash$/ } @args;
+@args = grep { !/^--gzip$/ } @args;
 
 my $query_path = $args[0];
 my $output_path = $args[1];
@@ -43,10 +49,18 @@ sub escape {
     return $val =~ s/'/''/gr;
 }
 
-if ($output_path eq "-") {
-    $output_path = "stdout";
+if ($use_gzip) {
+    if ($output_path eq "-") {
+        $output_path = "program 'gzip'";
+    } else {
+        $output_path = "program 'gzip > " . escape($output_path) . "'";
+    }
 } else {
-    $output_path = "'" . escape($output_path) ."'";
+    if ($output_path eq "-") {
+        $output_path = "stdout";
+    } else {
+        $output_path = "'" . escape($output_path) . "'";
+    }
 }
 
 my $query = undef;

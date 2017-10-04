@@ -61,3 +61,11 @@ from psql will be present in the resulting file.
 You can also call query2copy with --no-backslash to generate a copy statement
 without a backslash.
 
+query2copy can also be called with the option --gzip to generate a program 'gzip > output.csv.gz'
+command. For example:
+
+query2copy --gzip /tmp/query.sql /tmp/contracts.csv.gz
+
+Will result in (this example shown with sets/functions):
+
+\copy (select *, pg_temp.helper(contract_key) from contracts) to program 'gzip > /tmp/contracts.csv.gz' with csv header
