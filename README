@@ -11,6 +11,28 @@ output to /tmp/contracts.csv:
 
 set work_mem = '16MB';
 
+do $$
+begin
+    
+end;
+$$ language plpgsql;
+
+do $$
+begin
+    perform 'some_temporary_table'::regclass;
+exception
+    when undefined_table then
+        create temporary table some_temporary_table as
+        select
+            *
+        from
+            contracts
+        where
+            client ~ 'Jimmy'
+        ;
+end;
+$$ language plpgsql;
+
 create or replace function pg_temp.helper(val text)
 returns integer
 as $$
@@ -27,12 +49,27 @@ select
     *,
     pg_temp.helper(contract_key)
 from
-    contracts
+    some_temporary_table
 ;
 
 query2copy will convert it to this:
 
 set work_mem = '16MB';
+do $$
+begin
+    perform 'some_temporary_table'::regclass;
+exception
+    when undefined_table then
+        create temporary table some_temporary_table as
+        select
+            *
+        from
+            contracts
+        where
+            client ~ 'Jimmy'
+        ;
+end;
+$$ language plpgsql;
 create or replace function pg_temp.helper(val text)
 returns integer
 as $$
@@ -45,7 +82,7 @@ begin
 end;
 $$ language plpgsql immutable;
 
-\copy (select *, pg_temp.helper(contract_key) from contracts) to '/tmp/contracts.csv' with csv header
+\copy (select *, pg_temp.helper(contract_key) from some_temporary_table) to '/tmp/contracts.csv' with csv header
 
 This allows you to use query2copy to convert a query (with sets and helper
 functions) into a copy-able statement suitable for use in a pipe. For example:

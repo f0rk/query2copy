@@ -83,7 +83,7 @@ while (my $line = <$query>) {
 
     # if this line is part of a function definition, put it aside. we'll append
     # it to the top of the buffer we generate later.
-    if ($line =~ /create (or replace )?function/) {
+    if ($line =~ /(create (or replace )?function|\bdo\b)/) {
         $is_in_function = 1;
     }
 
