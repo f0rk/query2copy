@@ -77,7 +77,8 @@ my $is_in_function = 0;
 my $saw_function_open_quotes = 0;
 my $looking_for_function_end = 0;
 
-my $is_in_create_drop = 0;
+my $is_in_create_drop_table = 0;
+my $is_in_create_drop_index = 0;
 
 while (my $line = <$query>) {
     $line =~ tr/\x{feff}//d;
@@ -153,12 +154,27 @@ while (my $line = <$query>) {
     # if this line starts with a create or drop table, attempt to collect all
     # the relevant lines and set them aside.
     if ($line =~ /((create(\s*temporary)?\s+table(\s+if\s+not\s+exists)?)|(drop\s+table(\s+if\s+exists)?))/) {
-        $is_in_create_drop = 1;
+        $is_in_create_drop_table = 1;
     }
 
-    if ($is_in_create_drop) {
-        if ($is_in_create_drop && $line =~ /;/) {
-            $is_in_create_drop = 0;
+    if ($is_in_create_drop_table) {
+        if ($is_in_create_drop_table && $line =~ /;/) {
+            $is_in_create_drop_table = 0;
+        }
+
+        push(@prepends, $line);
+        next;
+    }
+
+    # if this line starts with a create or drop index, attempt to collect all
+    # the relevant lines and set them aside.
+    if ($line =~ /((create(\s*unique)?\s+index(\s+concurrently)?(\s+if\s+not\s+exists)?)|(drop\s+index(\s+concurrently)(\s+if\s+exists)?))/) {
+        $is_in_create_drop_index = 1;
+    }
+
+    if ($is_in_create_drop_index) {
+        if ($is_in_create_drop_index && $line =~ /;/) {
+            $is_in_create_drop_index = 0;
         }
 
         push(@prepends, $line);
